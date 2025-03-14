@@ -6,9 +6,19 @@
     <title>Câu cá</title>
     <style>
       body {
-        text-align: center;
         font-family: Arial, sans-serif;
-        margin-top: 250px;
+        display: flex;
+        justify-content: space-between;
+        padding: 20px;
+      }
+      #stats {
+        flex: 1;
+        padding: 20px;
+        border-right: 2px solid #ccc;
+      }
+      #game-container {
+        text-align: center;
+        flex: 2;
       }
       #clicker-button {
         padding: 20px;
@@ -18,54 +28,170 @@
         border: none;
         cursor: pointer;
         border-radius: 10px;
+        transition: background-color 0.3s;
       }
-      #clicker-button:hover {
-        background-color: #45a049;
+      #clicker-button:disabled {
+        background-color: gray;
+        cursor: not-allowed;
       }
-      #score {
-        font-size: 24px;
-        margin-top: 20px;
+      #message {
+        color: green;
+        font-weight: bold;
       }
-      #reset-button {
-        margin-top: 20px;
+      #last-fish {
+        font-style: italic;
+        color: blue;
+      }
+      #upgrade-menu {
+        flex: 1;
+        padding: 20px;
+        border-left: 2px solid #ccc;
+        text-align: left;
+      }
+      .upgrade-button {
         padding: 10px;
-        font-size: 16px;
-        background-color: red;
+        background-color: #2196f3;
         color: white;
         border: none;
         cursor: pointer;
         border-radius: 5px;
       }
+      .upgrade-button:disabled {
+        background-color: gray;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
-    <h1>Câu cá</h1>
-    <button id="clicker-button">Câu cá</button>
-    <p id="score">Score: 0</p>
-    <!-- <button id="reset-button">Reset</button> -->
+    <!-- Khu vực hiển thị thông số -->
+    <div id="stats">
+      <h2>Thông số</h2>
+      <p>🎯 Tỷ lệ câu thành công: <span id="success-rate">40%</span></p>
+      <p>⏳ Thời gian hồi cần: <span id="cooldown-time">3s</span></p>
+      <p>💰 Xu: <span id="coins">0</span></p>
+      <h3>Tổng số cá: <span id="total-fish">0</span></h3>
+      <p>🐟 Cá thường: <span id="fish-normal">0</span></p>
+      <p>🌟 Cá vàng: <span id="fish-gold">0</span></p>
+      <p>💎 Cá kim cương: <span id="fish-diamond">0</span></p>
+      <p>🐢 Rùa: <span id="fish-turtle">0</span></p>
+      <p>🐊 Cá lóc: <span id="fish-snakehead">0</span></p>
+      <button onclick="sellFish()">Bán cá</button>
+    </div>
+
+    <!-- Khu vực chơi game -->
+    <div id="game-container">
+      <h1>Câu cá</h1>
+      <button id="clicker-button">Câu cá</button>
+      <p id="message"></p>
+      <p id="last-fish"></p>
+    </div>
+
+    <!-- Menu nâng cấp -->
+    <div id="upgrade-menu">
+      <h2>Nâng cấp</h2>
+      <p>
+        🔧 Cần câu (Cấp: <span id="rod-level">0</span>) - Giá:
+        <span id="rod-price">5</span> xu
+      </p>
+      <button id="upgrade-rod" class="upgrade-button">Nâng cấp cần</button>
+      <p>
+        🪱 Mồi (Cấp: <span id="bait-level">0</span>) - Giá:
+        <span id="bait-price">5</span> xu
+      </p>
+      <button id="upgrade-bait" class="upgrade-button">Nâng cấp mồi</button>
+    </div>
 
     <script>
-      let score = localStorage.getItem("clickerScore")
-        ? parseInt(localStorage.getItem("clickerScore"))
-        : 0;
-      const button = document.getElementById("clicker-button");
-      const scoreDisplay = document.getElementById("score");
-      const resetButton = document.getElementById("reset-button");
+      let coins = 0;
+      let fish = { normal: 0, gold: 0, diamond: 0, turtle: 0, snakehead: 0 };
+      let rodLevel = 0;
+      let baitLevel = 0;
 
-      // Hiển thị điểm số đã lưu
-      scoreDisplay.textContent = "Score: " + score;
+      function updateUI() {
+        document.getElementById("coins").textContent = coins;
+        document.getElementById("total-fish").textContent = Object.values(
+          fish
+        ).reduce((a, b) => a + b, 0);
+        document.getElementById("fish-normal").textContent = fish.normal;
+        document.getElementById("fish-gold").textContent = fish.gold;
+        document.getElementById("fish-diamond").textContent = fish.diamond;
+        document.getElementById("fish-turtle").textContent = fish.turtle;
+        document.getElementById("fish-snakehead").textContent = fish.snakehead;
+        document.getElementById("success-rate").textContent =
+          40 + rodLevel * 5 + "%";
+        document.getElementById("cooldown-time").textContent =
+          Math.max(3 - baitLevel, 0) + "s";
+        document.getElementById("rod-price").textContent = 5 * 2 ** rodLevel;
+        document.getElementById("bait-price").textContent = 5 * 2 ** baitLevel;
+        document.getElementById("rod-level").textContent = rodLevel;
+        document.getElementById("bait-level").textContent = baitLevel;
+      }
 
-      button.addEventListener("click", () => {
-        score++;
-        scoreDisplay.textContent = "Score: " + score;
-        localStorage.setItem("clickerScore", score);
+      document
+        .getElementById("clicker-button")
+        .addEventListener("click", () => {
+          document.getElementById("clicker-button").disabled = true;
+          document.getElementById("message").textContent = "Đang câu cá... 🎣";
+
+          setTimeout(() => {
+            let rand = Math.random() * 100;
+            let caughtFish = "";
+            if (rand < 70) {
+              fish.normal++;
+              caughtFish = "🐟 Cá thường";
+            } else if (rand < 85) {
+              fish.gold++;
+              caughtFish = "🌟 Cá vàng";
+            } else if (rand < 88) {
+              fish.diamond++;
+              caughtFish = "💎 Cá kim cương";
+            } else if (rand < 108) {
+              fish.turtle++;
+              caughtFish = "🐢 Rùa";
+            } else {
+              fish.snakehead++;
+              caughtFish = "🐊 Cá lóc";
+            }
+
+            updateUI();
+            document.getElementById("message").textContent =
+              "Bạn đã câu được cá!";
+            document.getElementById("last-fish").textContent =
+              "🎣 Bạn vừa câu được: " + caughtFish;
+            document.getElementById("clicker-button").disabled = false;
+          }, Math.max(3000 - baitLevel * 1000, 0));
+        });
+
+      function sellFish() {
+        coins +=
+          fish.normal * 5 +
+          fish.gold * 20 +
+          fish.diamond * 200 +
+          fish.turtle * 10 +
+          fish.snakehead * 7;
+        fish = { normal: 0, gold: 0, diamond: 0, turtle: 0, snakehead: 0 };
+        updateUI();
+      }
+
+      document.getElementById("upgrade-rod").addEventListener("click", () => {
+        let price = 5 * 2 ** rodLevel;
+        if (coins >= price) {
+          coins -= price;
+          rodLevel++;
+          updateUI();
+        }
       });
 
-      resetButton.addEventListener("click", () => {
-        score = 0;
-        localStorage.setItem("clickerScore", score);
-        scoreDisplay.textContent = "Score: " + score;
+      document.getElementById("upgrade-bait").addEventListener("click", () => {
+        let price = 5 * 2 ** baitLevel;
+        if (coins >= price && baitLevel < 3) {
+          coins -= price;
+          baitLevel++;
+          updateUI();
+        }
       });
+
+      updateUI();
     </script>
   </body>
 </html>
