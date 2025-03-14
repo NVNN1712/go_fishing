@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Câu cá</title>
+    <style>
+      body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        margin-top: 250px;
+      }
+      #clicker-button {
+        padding: 20px;
+        font-size: 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+      }
+      #clicker-button:hover {
+        background-color: #45a049;
+      }
+      #score {
+        font-size: 24px;
+        margin-top: 20px;
+      }
+      #reset-button {
+        margin-top: 20px;
+        padding: 10px;
+        font-size: 16px;
+        background-color: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Câu cá</h1>
+    <button id="clicker-button">Câu cá</button>
+    <p id="score">Score: 0</p>
+    <!-- <button id="reset-button">Reset</button> -->
+
+    <script>
+      let score = localStorage.getItem("clickerScore")
+        ? parseInt(localStorage.getItem("clickerScore"))
+        : 0;
+      const button = document.getElementById("clicker-button");
+      const scoreDisplay = document.getElementById("score");
+      const resetButton = document.getElementById("reset-button");
+
+      // Hiển thị điểm số đã lưu
+      scoreDisplay.textContent = "Score: " + score;
+
+      button.addEventListener("click", () => {
+        score++;
+        scoreDisplay.textContent = "Score: " + score;
+        localStorage.setItem("clickerScore", score);
+      });
+
+      resetButton.addEventListener("click", () => {
+        score = 0;
+        localStorage.setItem("clickerScore", score);
+        scoreDisplay.textContent = "Score: " + score;
+      });
+    </script>
+  </body>
+</html>
